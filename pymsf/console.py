@@ -52,7 +52,7 @@ class Console:
         for session_id in sessions:
             if sessions[session_id]["target_host"] == target:
                 return (True, session_id)
-        return (False, session_id)
+        return (False, None)
     
     async def run_payloads(self, targets: dict):
         """
