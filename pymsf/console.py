@@ -17,7 +17,7 @@ class Console:
         self.shells = {}
 
     def search_module(self, module_name):
-        logging.debug(f"searching for module -> ")
+        logging.debug(f"searching for module -> {module_name}")
         return self.client.modules.search(module_name)
 
     def is_valid_module(self, module_name):
@@ -35,13 +35,13 @@ class Console:
             return        
         self.exploit = self.client.modules.use('exploit', payload_path)
         
-        
     def set_arguments(self, arguments):
         if self.exploit is None: return
         for argument in arguments.keys():
             self.exploit[argument] = arguments[argument]
 
     def get_session_id(self, ip):
+        logging.debug(f"curren sessions data -> {self.client.sessions.list}")
         for id in self.client.sessions.list.keys():
             if self.client.sessions.list[id]["session_host"] == ip:
                 return id
@@ -110,7 +110,7 @@ class Console:
     def get_sessions(self):
         return self.client.sessions.list
     
-    async def exploit(self, ip, path):
+    async def exploit_test(self, ip, path):
         logging.debug("before: "+str(self.client.sessions.list))
         #exploit = self.client.modules.use('exploit', "unix/ftp/vsftpd_234_backdoor")
         self.set_payload(path)
