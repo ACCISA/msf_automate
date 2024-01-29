@@ -71,6 +71,7 @@ class Console:
             session_id = await self.run_payload(shell, target)
             result[target]["session_id"] = session_id
             logging.debug(f"payload sent for -> {target}") 
+        logging.debug(f"final session data -> {self.client.sessions.list}")
 
 
     async def run_payload(self, shell_path, ip):
