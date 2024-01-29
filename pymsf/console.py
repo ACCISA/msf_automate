@@ -87,6 +87,8 @@ class Console:
 
         session_id = self.get_session_id(ip)
 
+        logging.debug(f"job_id -> {exploit_result["job_id"]}")
+        logging.debug(f"session_id -> {session_id}")
         if exploit_result["job_id"] == None or session_id == None:
             logging.error("payload failed")
             return
