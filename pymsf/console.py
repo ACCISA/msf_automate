@@ -41,7 +41,7 @@ class Console:
             self.exploit[argument] = arguments[argument]
 
     def get_session_id(self, ip):
-        logging.debug(f"curren sessions data -> {self.client.sessions.list}")
+        logging.debug(f"current sessions data -> {self.client.sessions.list}")
         for id in self.client.sessions.list.keys():
             if self.client.sessions.list[id]["session_host"] == ip:
                 return id
