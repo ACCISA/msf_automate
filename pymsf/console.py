@@ -103,11 +103,8 @@ class Console:
         self.exploit = None
         self.shells = {}
 
-    def get_running_stats(self):
-        # "192.168.17.130": ('exploit/unix/ftp/vsftpd_234_backdoor','cmd/unix/interact',{"RHOSTS":"192.168.17.130"}),
-        res = self.rpc.call("module.check",  ["exploit","exploit/unix/ftp/vsftpd_234_backdoor",{"RHOSTS":"192.168.17.130"}])
-        logging.debug(res)
-        return self.rpc.call('module.running_stats')
+    def get_running_stats(self, id):
+        return self.rpc.call('job.info',[id])
 
     def search_module(self, module_name):
         logging.debug(f"searching for module -> {module_name}")
@@ -179,7 +176,7 @@ class Console:
         logging.debug("job_id -> " + str(exploit_result["job_id"]))
         logging.debug(exploit_result)
 
-        logging.debug(self.get_running_stats())
+        logging.debug(self.get_running_stats(exploit_result["job_id"]))
         session_id = self.get_session_id(ip)
 
         logging.debug(f"job_id -> {exploit_result['job_id']}")
