@@ -188,6 +188,10 @@ class Console:
         logging.info("waiting for 5 seconds")
         await asyncio.sleep(5)
         await target1.interact("whoami")
+        await target1.interact("ls")
+        await target1.interact("cd /")
+        await target1.interact("ls")
+
         # await self.run_payloads(targets)
 
 class Target:
@@ -256,7 +260,7 @@ class Target:
             return (False, None)
         if (not is_job and is_session) or (is_job and is_session):
             self.is_exploited = True
-            self.session_id = session_id
+            self.session_id = str(session_id)
             logging.info("job completed and a session was created")
             logging.info(f"sesion_id -> {session_id}")
             return (True, session_id)
