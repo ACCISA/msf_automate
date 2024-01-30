@@ -266,7 +266,10 @@ class Console:
         session_id = await self.run_payload('cmd/unix/interact',"192.168.17.130")
         if session_id is None: return
         logging.debug("after: "+str(self.client.sessions.list))
+        await asyncio.sleep(5)
+        logging.debug("wait done")
         await self.interact(session_id, "whoami","192.168.17.130")
+        logging.debug("payload completd job is done bye")
         # print(client.sessions.list)
         # shell = client.sessions.session('1')
         # shell.write('whoami')
