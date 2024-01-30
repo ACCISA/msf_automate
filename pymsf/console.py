@@ -7,7 +7,7 @@ import requests.packages.urllib3
 import msgpack
 from pymetasploit3.msfrpc import MsfRpcClient
 from retry import retry
-from typing import List
+from typing import List, Dict
 
 requests.packages.urllib3.disable_warnings()
 
@@ -145,9 +145,17 @@ class Console:
                 return (True, session_id)
         return (False, None)
     
-    async def bulk_interact(self, targets: List, command):
+    async def multi_exec(self, targets: List, command):
         interacts = []
         for target in targets:
+            target: Target
+            interacts.append(target.interact(command))
+        await asyncio.gather(*interacts)
+
+    async def bulk_exec(self, targets_exec: Dict):
+        interacts = []
+        for ip in targets_exec.keys():
+            target, command = targets_exec[ip]
             target: Target
             interacts.append(target.interact(command))
         await asyncio.gather(*interacts)
@@ -193,7 +201,11 @@ class Console:
         await target1.interact("whoami")
         logging.info("waiting for 5 seconds")
         await asyncio.sleep(5)
-        await self.bulk_interact([target1, target2], "ls")
+        await self.multi_exec([target1, target2], "whoami")
+        await self.bulk_exec({
+            target1.ip:(target1, "cd ~; ls"),
+            target2.ip:(target2, "cd /; ls")
+        })
         
 
         # await self.run_payloads(targets)
@@ -282,3 +294,10 @@ class Target:
         logging.info("trying to interact: " + str(self.session_id))
         logging.info(self.shell.write(command))
         logging.info(self.shell.read())
+
+    async def stop_session(self):
+        self.rpc.call("session.stop",[self.session_id])
+        self.is_exploited = False
+        self.shell = None
+        self.exploit_result = {}
+        logging.inf("session was stoped")
