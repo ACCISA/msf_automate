@@ -184,7 +184,7 @@ class Console:
         target1.set_arguments({"RHOSTS":"192.168.17.130"})
         target2.set_arguments({"RHOSTS":"192.168.17.131"})
         await asyncio.gather(target1.run_payload("cmd/unix/interact"), target2.run_payload("cmd/unix/interact"))
-        target1.interact("whoami")
+        await target1.interact("whoami")
         logging.info("waiting for 5 seconds")
         await asyncio.sleep(5)
         await target1.interact("whoami")
@@ -235,9 +235,6 @@ class Target:
     async def is_job_completed(self, ip):
         sessions_data = self.rpc.call("session.list")
         jobs_data = self.rpc.call("job.list")
-        logging.info(self.exploit_result)
-        logging.info(sessions_data)
-        logging.info(jobs_data)
         job_lookup = self.exploit_result
         lookup_id = job_lookup["job_id"]
         lookup_uuid = job_lookup["uuid"]
