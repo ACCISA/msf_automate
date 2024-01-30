@@ -187,7 +187,7 @@ class Console:
         target1.interact("whoami")
         logging.info("waiting for 5 seconds")
         await asyncio.sleep(5)
-        target1.interact("whoami")
+        await target1.interact("whoami")
         # await self.run_payloads(targets)
 
 class Target:
