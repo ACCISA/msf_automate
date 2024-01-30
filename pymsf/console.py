@@ -6,6 +6,8 @@ import uuid
 import requests.packages.urllib3
 import msgpack
 from pymetasploit3.msfrpc import MsfRpcClient
+from retry import retry
+
 requests.packages.urllib3.disable_warnings()
 
 
