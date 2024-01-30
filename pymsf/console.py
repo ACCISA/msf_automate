@@ -16,6 +16,8 @@ logging.basicConfig(
     format='%(levelname)s [%(asctime)s] %(filename)s:%(lineno)d - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
+logger = logging.getLogger('connectionpool')
+logger.setLevel(logging.INFO)
 
 def encode(data):
     return msgpack.packb(data)
@@ -219,6 +221,7 @@ class Console:
 
     async def interact(self, session_id, command, ip):
         logging.debug("trying to interact: " + str(session_id))
+        logging.debug(type(session_id))
         client = MsfRpcClient('yourpassword',ssl=True)
         session_id = session_id
         for id in client.sessions.list.keys():
