@@ -99,9 +99,6 @@ class RpcClient:
 class Console:
     def __init__(self) -> None:
         self.rpc = RpcClient('yourpassword', ssl=True)
-        data = self.get_running_stats()
-        logging.debug(data)
-        return
         self.client = MsfRpcClient('yourpassword', ssl=True)
         self.exploit = None
         self.shells = {}
@@ -179,6 +176,7 @@ class Console:
         logging.debug("job_id -> " + str(exploit_result["job_id"]))
         logging.debug(exploit_result)
 
+        logging.debug(self.get_running_stats())
         session_id = self.get_session_id(ip)
 
         logging.debug(f"job_id -> {exploit_result['job_id']}")
