@@ -165,7 +165,7 @@ class Console:
             # session_id = await self.run_payload(shell, target)
             tasks.append(self.run_payload(shell, target))
             logging.debug(f"payload sent for -> {target}") 
-        results = await asyncio.gather(*[tasks])
+        results = await asyncio.gather(*tasks)
         for result in results:
             logging.debug(result)
 
