@@ -231,6 +231,7 @@ class Console:
         logging.debug(shell)
         logging.debug(shell.write(command))
         logging.debug(shell.read())
+        logging.debug(self.rpc.call("session.list"))
 
         
     def get_sessions(self):
@@ -269,7 +270,6 @@ class Console:
         logging.debug("after: "+str(self.client.sessions.list))
         await self.interact(session_id, "whoami","192.168.17.130")
         await asyncio.sleep(5)
-        logging.debug(self.rpc.call("session.info"))
         logging.debug("wait done")
         await self.interact(session_id, "whoami","192.168.17.130")
         logging.debug("payload completd job is done bye")
