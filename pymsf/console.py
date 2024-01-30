@@ -218,7 +218,7 @@ class Console:
         return session_id
 
     async def interact(self, session_id, command, ip):
-        logging.debug("trying to interact: " + session_id)
+        logging.debug("trying to interact: " + str(session_id))
         client = MsfRpcClient('yourpassword',ssl=True)
         session_id = session_id
         for id in client.sessions.list.keys():
