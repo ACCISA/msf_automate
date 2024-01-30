@@ -166,6 +166,8 @@ class Console:
     async def is_job_completed(self, ip):
         sessions_data = self.rpc.call("session.list")
         jobs_data = self.rpc.call("job.list")
+        logging.debug(sessions_data)
+        logging.debug(jobs_data)
         job_lookup = self.attempts[ip]
         lookup_id = job_lookup["job_id"]
         lookup_uuid = job_lookup["uuid"]
@@ -210,7 +212,7 @@ class Console:
         while not completed:
             logging.debug(f"checking status for job -> {exploit_result['job_id']}")
             completed, session_id = await self.is_job_completed(ip)
-            asyncio.sleep(1)
+            await asyncio.sleep(1)
 
         if exploit_result["job_id"] == None or session_id == None:
             logging.error("payload failed")
