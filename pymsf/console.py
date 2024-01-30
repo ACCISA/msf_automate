@@ -99,6 +99,8 @@ class RpcClient:
 class Console:
     def __init__(self) -> None:
         self.rpc = RpcClient('yourpassword', ssl=True)
+        self.get_running_stats()
+        return
         self.client = MsfRpcClient('yourpassword', ssl=True)
         self.exploit = None
         self.shells = {}
