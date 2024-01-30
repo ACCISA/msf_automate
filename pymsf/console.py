@@ -162,6 +162,10 @@ class Console:
             result[target]["session_id"] = session_id
             logging.debug(f"payload sent for -> {target}") 
         logging.debug(self.rpc.call("job.list"))
+        logging.debug(self.rpc.call("session.list"))
+        await asyncio.sleep(10)
+        logging.debug(self.rpc.call("job.list"))
+        logging.debug(self.rpc.call("session.list"))
         logging.debug(f"final session data -> {self.client.sessions.list}")
 
 
