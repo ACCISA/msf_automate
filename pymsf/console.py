@@ -152,6 +152,7 @@ class Console:
         targets = {"ip": (payload, shell, arguments)}
         """
         result = {}
+        tasks = []
         for target in targets:
             payload, shell, arguments = targets[target]
             result[target] = {}
@@ -161,9 +162,12 @@ class Console:
                 continue
             self.set_payload(payload)
             self.set_arguments(arguments)
-            session_id = await self.run_payload(shell, target)
-            result[target]["session_id"] = session_id
+            # session_id = await self.run_payload(shell, target)
+            tasks.append(self.run_payload(shell, target))
             logging.debug(f"payload sent for -> {target}") 
+        results = await asyncio.gather(*[tasks])
+        for result in results:
+            logging.debug(result)
 
     async def is_job_completed(self, ip):
         sessions_data = self.rpc.call("session.list")
@@ -181,6 +185,7 @@ class Console:
             if str(job_id) == str(lookup_id):
                 is_job = True
                 break
+
         for session in sessions_data.keys():
             if sessions_data[session]["exploit_uuid"] == lookup_uuid:
                 session_id = session
