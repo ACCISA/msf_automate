@@ -166,6 +166,7 @@ class Console:
     async def is_job_completed(self, ip):
         sessions_data = self.rpc.call("session.list")
         jobs_data = self.rpc.call("job.list")
+        logging.debug(self.attempts[ip])
         logging.debug(sessions_data)
         logging.debug(jobs_data)
         job_lookup = self.attempts[ip]
