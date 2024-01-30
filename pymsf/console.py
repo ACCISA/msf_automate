@@ -1,7 +1,12 @@
 import subprocess
 import logging
 import asyncio
+import requests
+import uuid
+import requests.packages.urllib3
+import msgpack
 from pymetasploit3.msfrpc import MsfRpcClient
+requests.packages.urllib3.disable_warnings()
 
 
 logging.basicConfig(
@@ -10,11 +15,94 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
+def encode(data):
+    return msgpack.packb(data)
+
+def decode(data):
+    return msgpack.unpackb(data, strict_map_key=False)
+
+def convert(data, encoding="utf-8"):
+    """
+    Converts all bytestrings to utf8
+    """
+    if isinstance(data, bytes):  return data.decode(encoding=encoding)
+    if isinstance(data, list):   return list(map(lambda iter: convert(iter, encoding=encoding), data))
+    if isinstance(data, set):    return set(map(lambda iter: convert(iter, encoding=encoding), data))
+    if isinstance(data, dict):   return dict(map(lambda iter: convert(iter, encoding=encoding), data.items()))
+    if isinstance(data, tuple):  return map(lambda iter: convert(iter, encoding=encoding), data)
+    return data
+
+class RpcClient:
+    def __init__(self, password,**kwargs) -> None:
+        self.uri = kwargs.get('uri', '/api/')
+        self.port = kwargs.get('port', 55553)
+        self.host = kwargs.get('server', '127.0.0.1')
+        self.ssl = kwargs.get('ssl', False)
+        self.token = kwargs.get('token')
+        self.encoding = kwargs.get('encoding', 'utf-8')
+        self.headers = {"Content-type": "binary/message-pack"}
+        if self.token is None:
+            self.login(kwargs.get('username', 'msf'), password)
+
+    def add_perm_token(self):
+        """
+        Add a permanent UUID4 API token
+        """
+        token = str(uuid.uuid4())
+        self.call("auth.token_add", [token])
+        return token
+    
+    def call(self, method, opts=None, is_raw=False):
+        if not isinstance(opts, list):
+            opts = []
+        if method != 'auth.login':
+            if self.token is None:
+                raise Exception("MsfRPC: Not Authenticated")
+
+        if method != "auth.login":
+            opts.insert(0, self.token)
+
+        if self.ssl is True:
+            url = "https://%s:%s%s" % (self.host, self.port, self.uri)
+        else:
+            url = "http://%s:%s%s" % (self.host, self.port, self.uri)
+
+        opts.insert(0, method)
+        payload = encode(opts)
+
+        r = self.post_request(url, payload)
+
+        opts[:] = []  # Clear opts list
+
+        if is_raw:
+            return r.content
+
+        return convert(decode(r.content), self.encoding)  # convert all keys/vals to utf8
+
+    def login(self, user, password):
+        auth = self.call('auth.login', [user, password])
+        try:
+            if auth['result'] == 'success':
+                self.token = auth['token']
+                token = self.add_perm_token()   
+                self.token = token
+                return True
+        except Exception:
+            raise Exception("MsfRPC: Authentication failed")
+
+    @retry(tries=3, delay=1, backoff=2)
+    def post_request(self, url, payload):
+        return requests.post(url, data=payload, headers=self.headers, verify=False)
+
 class Console:
     def __init__(self) -> None:
+        self.rpc = RpcClient('yourpassword', ssl=True)
         self.client = MsfRpcClient('yourpassword', ssl=True)
         self.exploit = None
         self.shells = {}
+
+    def get_running_stats(self):
+        self.rpc.call('module.running_stats')
 
     def search_module(self, module_name):
         logging.debug(f"searching for module -> {module_name}")
