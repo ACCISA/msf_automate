@@ -104,6 +104,9 @@ class Console:
         self.shells = {}
 
     def get_running_stats(self):
+        # "192.168.17.130": ('exploit/unix/ftp/vsftpd_234_backdoor','cmd/unix/interact',{"RHOSTS":"192.168.17.130"}),
+        res = self.rpc.call("module.check",  ["exploit","exploit/unix/ftp/vsftpd_234_backdoor",{"RHOSTS":"192.168.17.130"}])
+        logging.debug(res)
         return self.rpc.call('module.running_stats')
 
     def search_module(self, module_name):
