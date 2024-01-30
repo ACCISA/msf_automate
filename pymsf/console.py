@@ -101,6 +101,7 @@ class Console:
         self.rpc = RpcClient('yourpassword', ssl=True)
         self.client = MsfRpcClient('yourpassword', ssl=True)
         self.exploit = None
+        self.attempts = {}
         self.shells = {}
 
     def get_running_stats(self, id):
@@ -161,12 +162,38 @@ class Console:
             session_id = await self.run_payload(shell, target)
             result[target]["session_id"] = session_id
             logging.debug(f"payload sent for -> {target}") 
-        logging.debug(self.rpc.call("job.list"))
-        logging.debug(self.rpc.call("session.list"))
-        await asyncio.sleep(10)
-        logging.debug(self.rpc.call("job.list"))
-        logging.debug(self.rpc.call("session.list"))
-        logging.debug(f"final session data -> {self.client.sessions.list}")
+
+    async def is_job_completed(self, ip):
+        sessions_data = self.rpc.call("session.list")
+        jobs_data = self.rpc.call("job.list")
+        job_lookup = self.attempts[ip]
+        lookup_id = job_lookup["job_id"]
+        lookup_uuid = job_lookup["uuid"]
+        is_job = False
+        is_session = False
+        session_id = None
+        for job_id in jobs_data.keys():
+            if job_id == lookup_id:
+                is_job = True
+                break
+        for session in sessions_data.keys():
+            if sessions_data[session]["exploit_uuid"] == lookup_uuid:
+                session_id = session
+                is_session = True
+                break
+        if is_job and is_session:
+            logging.error("job is present in both session.list and job.list")
+            return (True, None)
+        if is_job and not is_session:
+            logging.debug("job is still running")
+            return (False, None)
+        if not is_job and is_session:
+            logging.debug("job completed and a session was created")
+            logging.debug(f"sesion_id -> {session_id}")
+            return (True, session_id)
+        if not is_job and not is_session:
+            logging.warning("job completed but no session was created")
+            return (True, None)
 
 
     async def run_payload(self, shell_path, ip):
@@ -177,19 +204,17 @@ class Console:
             return session_id
 
         exploit_result = self.exploit.execute(payload=shell_path)
+        self.attempts[ip] = exploit_result
         exploit_result["ip"] = ip
-        logging.debug("job_id -> " + str(exploit_result["job_id"]))
-        logging.debug(exploit_result)
+        completed = False
+        while not completed:
+            logging.debug(f"checking status for job -> {exploit_result['job_id']}")
+            completed, session_id = await self.is_job_completed(ip)
+            asyncio.sleep(1)
 
-        logging.debug(self.get_running_stats(exploit_result["job_id"]))
-        session_id = self.get_session_id(ip)
-
-        logging.debug(f"job_id -> {exploit_result['job_id']}")
-        logging.debug(f"session_id -> {session_id}")
         if exploit_result["job_id"] == None or session_id == None:
             logging.error("payload failed")
             return
-        logging.debug(exploit_result)
         return session_id
 
     async def interact(self, session_id, command, ip):
