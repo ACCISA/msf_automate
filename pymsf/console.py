@@ -184,13 +184,10 @@ class Console:
                 session_id = session
                 is_session = True
                 break
-        if is_job and is_session:
-            logging.error("job is present in both session.list and job.list")
-            return (True, None)
         if is_job and not is_session:
             logging.debug("job is still running")
             return (False, None)
-        if not is_job and is_session:
+        if (not is_job and is_session) or (is_job and is_session):
             logging.debug("job completed and a session was created")
             logging.debug(f"sesion_id -> {session_id}")
             return (True, session_id)
