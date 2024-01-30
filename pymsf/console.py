@@ -7,6 +7,7 @@ import requests.packages.urllib3
 import msgpack
 from pymetasploit3.msfrpc import MsfRpcClient
 from retry import retry
+from typing import List
 
 requests.packages.urllib3.disable_warnings()
 
@@ -144,9 +145,14 @@ class Console:
                 return (True, session_id)
         return (False, None)
     
-    def bulk_interact(self):
-        pass
-        
+    async def bulk_interact(self, targets: List, command):
+        interacts = []
+        for target in targets:
+            target: Target
+            interacts.append(target.interact(command))
+        await asyncio.gather(*interacts)
+
+
     def get_sessions(self):
         return self.client.sessions.list
 
@@ -187,10 +193,8 @@ class Console:
         await target1.interact("whoami")
         logging.info("waiting for 5 seconds")
         await asyncio.sleep(5)
-        await target1.interact("whoami")
-        await target1.interact("ls")
-        await target1.interact("cd /")
-        await target1.interact("ls")
+        await self.bulk_interact([target1, target2], "ls")
+        
 
         # await self.run_payloads(targets)
 
@@ -203,6 +207,7 @@ class Target:
         self.is_exploited = False
         self.exploit_result = {}
         self.session_id = None
+        self.shell = None
 
     def set_payload(self, mtype, mname):
         if not self.console.is_valid_module(mname):
@@ -215,7 +220,7 @@ class Target:
         for argument in arguments.keys():
             self.exploit[argument] = arguments[argument]
 
-    async def run_payload(self, shell_path):
+    async def run_payload(self, shell_path, create_shell=True):
         if self.exploit is None: return
         is_exploited, session_id = self.console.is_exploited(self.ip)
         if is_exploited:
@@ -234,6 +239,7 @@ class Target:
         if exploit_result["job_id"] == None or session_id == None:
             logging.error("payload failed")
             return
+        self.shell = self.console.client.sessions.session(self.session_id)
         return session_id
 
     async def is_job_completed(self, ip):
@@ -270,7 +276,8 @@ class Target:
         
     async def interact(self, command):
         if not self.is_exploited: return
+        if self.shell is None:
+            self.shell = self.console.client.sessions.session(self.session_id)
         logging.info("trying to interact: " + str(self.session_id))
-        shell = self.console.client.sessions.session(self.session_id)
-        logging.info(shell.write(command))
-        logging.info(shell.read())
+        logging.info(self.shell.write(command))
+        logging.info(self.shell.read())
