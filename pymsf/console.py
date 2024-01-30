@@ -225,6 +225,7 @@ class Target:
         is_exploited, session_id = self.console.is_exploited(self.ip)
         if is_exploited:
             logging.warning(f"target {self.ip} already has a session; session_id -> {session_id} ")
+            if create_shell: self.shell = self.console.client.sessions.session(self.session_id)
             return session_id
 
         exploit_result = self.exploit.execute(payload=shell_path)
@@ -239,7 +240,7 @@ class Target:
         if exploit_result["job_id"] == None or session_id == None:
             logging.error("payload failed")
             return
-        self.shell = self.console.client.sessions.session(self.session_id)
+        if create_shell: self.shell = self.console.client.sessions.session(self.session_id)
         return session_id
 
     async def is_job_completed(self, ip):
