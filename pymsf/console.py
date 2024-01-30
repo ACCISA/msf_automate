@@ -176,7 +176,7 @@ class Console:
         is_session = False
         session_id = None
         for job_id in jobs_data.keys():
-            if job_id == lookup_id:
+            if str(job_id) == str(lookup_id):
                 is_job = True
                 break
         for session in sessions_data.keys():
