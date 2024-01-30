@@ -99,14 +99,15 @@ class RpcClient:
 class Console:
     def __init__(self) -> None:
         self.rpc = RpcClient('yourpassword', ssl=True)
-        self.get_running_stats()
+        data = self.get_running_stats()
+        logging.debug(data)
         return
         self.client = MsfRpcClient('yourpassword', ssl=True)
         self.exploit = None
         self.shells = {}
 
     def get_running_stats(self):
-        self.rpc.call('module.running_stats')
+        return self.rpc.call('module.running_stats')
 
     def search_module(self, module_name):
         logging.debug(f"searching for module -> {module_name}")
