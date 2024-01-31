@@ -1,5 +1,5 @@
-<mxfile host="app.diagrams.net" modified="2024-01-31T22:36:01.319Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0" etag="JQYqHKwq3y0ODWygurkW" version="23.1.0" type="github" pages="6">
-  <diagram id="C5RBs43oDa-KdzZeNtuy" name="/start_console">
+<mxfile host="app.diagrams.net" modified="2024-01-31T22:36:38.468Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0" etag="XN9lF6xyqiczqpI2n0s3" version="23.1.0" type="github" pages="6">
+  <diagram id="C5RBs43oDa-KdzZeNtuy" name="POST /start_console">
     <mxGraphModel dx="1434" dy="774" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
@@ -133,7 +133,7 @@
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram id="-uF0YTjCy_jOWUeHamq0" name="/pheonix_sessions">
+  <diagram id="-uF0YTjCy_jOWUeHamq0" name="GET /pheonix_sessions">
     <mxGraphModel dx="1434" dy="774" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
