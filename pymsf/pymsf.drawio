@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-01-31T16:30:11.098Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0" etag="9eVYDznr6OyFWIdfiy3w" version="23.0.2" type="github" pages="3">
+<mxfile host="app.diagrams.net" modified="2024-01-31T16:33:19.547Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0" etag="eqzfF7el8hN07JN9I0EX" version="23.0.2" type="github" pages="3">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="/start_console">
     <mxGraphModel dx="1450" dy="634" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -175,7 +175,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="l7DML_QaieytWh-S0LDy-27" value="Returned Data" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="580" y="144" width="160" height="56" as="geometry" />
+          <mxGeometry x="390" y="152" width="160" height="56" as="geometry" />
         </mxCell>
         <mxCell id="l7DML_QaieytWh-S0LDy-28" value="Pheonix Sessions" style="text;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=12;whiteSpace=wrap;html=1;" vertex="1" parent="l7DML_QaieytWh-S0LDy-27">
           <mxGeometry y="26" width="160" height="30" as="geometry" />
@@ -209,11 +209,23 @@
         <mxCell id="l7DML_QaieytWh-S0LDy-48" value="Format data" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="330" y="258" width="120" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="l7DML_QaieytWh-S0LDy-53" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="l7DML_QaieytWh-S0LDy-51" target="l7DML_QaieytWh-S0LDy-28">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="l7DML_QaieytWh-S0LDy-51" value="Log request" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="500" y="260" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="guf_lrVrNARa7ZT70cHV-2" value="Get all phoenix_sessions" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="540" width="135" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="guf_lrVrNARa7ZT70cHV-4" value="Retrieve all the entries in MongoDB " style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="170" y="540" width="220" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="guf_lrVrNARa7ZT70cHV-5" value="Format data" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="620" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="guf_lrVrNARa7ZT70cHV-6" value="&lt;div&gt;Add additional fields to the JSON data&lt;/div&gt;&lt;div&gt;&amp;nbsp;and remove irrelevant fields&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="160" y="615" width="230" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="guf_lrVrNARa7ZT70cHV-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.413;entryY=0.967;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="l7DML_QaieytWh-S0LDy-48" target="l7DML_QaieytWh-S0LDy-28">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
